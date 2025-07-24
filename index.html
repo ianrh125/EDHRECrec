@@ -1,0 +1,285 @@
+<head><base target="_blank">
+    <link rel="shortcut icon" href="#">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDHRECrec</title>
+    <style>
+    html{
+        box-sizing: border-box;
+    }
+
+    *, *:before, *:after {
+        box-sizing: inherit;
+    }
+    /* changing font for all text */
+    body{
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .title{
+        font-weight: bold;
+        margin: 0px; /* altering text spacing */
+    }
+    .prompt{
+        color: blue;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
+    .result-text{
+        /*display: inline-block; /* allows this and result to display in one line */
+        margin: 0px;
+    }
+
+    .analyzer{
+        background-color: #EEEEEE;
+        border: 2px solid black;
+        border-radius: 10px; /* round corners */
+        padding: 10px; /* giving text room */
+        /*margin: 8px;*/ /* spacing calculators apart */
+        margin-right:15px;
+        margin-bottom:15px;
+        width: 600px; /* change if needed,  */
+        max-width: 100%;
+        float:left;
+        /*display: inline-block; /* let them show side by side */
+    }
+
+    .result-box{
+        border: 1px solid black;
+        background-color: white;
+        padding: 5px;
+    }
+
+    input[type=button]{
+        background-color:#77ee77;
+        border-radius: 15px;
+        border: 1px solid #383;
+        cursor: pointer;
+        padding: 5px 15px;
+        font-size: 15px;
+        font-weight: bold;
+        box-shadow: 0 3px #383;
+        transition: 0.3s ease-out;
+    }
+    input[type=button]:hover{
+        background-color:#3e3;
+    }
+    input[type=button]:active{
+        background-color:#5c5;
+        box-shadow: 0 1px #383;
+        transform: translateY(2px);
+        transition: 0.07s ease-out;
+    }
+    input[type=button]:disabled{
+        background-color:#bdb;
+        box-shadow: 0 1px #9b9;
+        transform: translateY(2px);
+    }
+
+    .bar-graph{
+        border: 1px solid black;
+        padding: 5px;
+        margin-top: 5px;
+        background-color: #def;
+        /*min-height: 100px;*/
+        /*width: 500px;*/
+        max-width: 100%;
+    }
+    .graph-bar{
+        display: inline-block;
+        margin: 0px;
+    }
+    .blue-bar{
+            
+        border: 1px solid black;
+        background-color: #1166dd;
+        width: 40px;
+    }
+    .red-bar{
+            
+        border: 1px solid black;
+        background-color: #ff1111;
+        width: 40px;
+    }
+    </style>
+</head>
+<body>
+    <script>
+
+        function sanitize(name){
+            return name
+                    .normalize("NFD")
+                    .replaceAll(/[\u0300-\u036f]/g, "")
+                    .toLowerCase()
+                    .replaceAll(" ", "-")
+                    .replaceAll("꞉", "")
+                    .replaceAll(/[!-,]/g, "")
+                    .replaceAll(/[.-/]/g, "")
+                    .replaceAll(/\-{2,}/g, "-")
+        }
+
+        function addResultText(id, parent, contents){
+            let text = document.getElementById(id);
+            if(text != null){
+                text.remove();
+            }
+            text = document.createElement("p");
+            text.id = id;
+            text.innerHTML = contents;
+            text.classList.add("result-text");
+            parent.appendChild(text);
+        }
+
+        function addGraph(id, parent, name, data, spacing, decimals, percent, highlight){
+            let graph = document.getElementById(id);
+            if(graph != null){
+                graph.remove();
+            }
+            let labels = [];
+            for(let i = 0; i < data.length; i++){
+                if(percent){
+                    labels.push((i * spacing * 100).toFixed(decimals) + "%");
+                }
+                else{
+                    labels.push((i * spacing).toFixed(decimals));
+                }
+            }
+            graph = createBarGraph(id, "Distribution of " + name, labels, data, name, parent.clientWidth);
+            parent.appendChild(graph);
+            let highlightBar = Math.floor(highlight/spacing);
+            let barID = id + "-bar-" + highlightBar;
+            let bar = document.getElementById(barID);
+            bar.style.backgroundColor = "red";  
+            bar.style.border = "2px solid #800"
+        }
+
+        async function loadCommanders(){
+            let resultBox = document.getElementById("load-result-box");
+            let commanderName1 = (document.getElementById('commander-name-1').value) || "";
+            let commanderName2 = (document.getElementById('commander-name-2').value) || "";
+            let sanitizedName1 = sanitize(commanderName1);
+            let sanitizedName2 = sanitize(commanderName2);
+            let sanitizedNames = "";
+            if(commanderName1 != "" && commanderName2 != ""){
+                let nameList = [sanitizedName1, sanitizedName2];
+                sanitizedNames = nameList.sort().join("-");
+            }
+            else{
+                sanitizedNames = sanitizedName1 + sanitizedName2;
+            }
+            const commanderLoadButton = document.getElementById("commander-load-button");
+            commanderLoadButton.disabled = true;
+            commanderLoadButton.value = 'Loading...';
+            var response = await fetch('https://api.salubrioussnail.com/?edhrecrec=' + sanitizedNames);
+            console.log('loaded');
+            commanderLoadButton.disabled = false;
+            commanderLoadButton.value = 'Load';
+            data = await response.json();
+            if(data.error != null){
+                if(data.error == "No matching cards"){
+                    addResultText("error-text", resultBox, "ERROR: No commander found. Make sure the commander's full name is spelled right, it has at least 100 decks, and is at least a month old");
+                }
+                document.getElementById("entropy-text").remove();
+                document.getElementById("entropy-graph").remove();
+                document.getElementById("synergy-text").remove();
+                document.getElementById("synergy-graph").remove();
+                document.getElementById("hipster-text").remove();
+                document.getElementById("hipster-graph").remove();
+                return;
+            }
+            commanderData = data.commander;
+
+            addResultText("entropy-text", resultBox, "Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong>");
+            addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy.data, data.charts.entropy.spacing, 1, false, commanderData.entropy);
+            addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong>");
+            addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy.data, data.charts.synergy.spacing, 0, false, commanderData.synergy);
+            addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong>");
+            addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster.data, data.charts.hipster.spacing, 0, true, commanderData.hipster);
+        }
+
+        function createBarGraph(graphID, graphName, graphLabels, graphValues, xLabelText, width){
+            let graph = document.getElementById(graphID);
+            if(graph != null){
+                graph.remove();
+            }
+            graph = document.createElement("div");
+            graph.id = graphID;
+            graph.classList.add("bar-graph");
+
+            let details = document.createElement("details");
+            details.id = graphID + "-details";
+            details.setAttribute("open", "");
+            graph.appendChild(details);
+
+            let summary = document.createElement("summary");
+            summary.id = graphID + "-summary";
+            summary.innerText = graphName;
+            details.appendChild(summary);
+            let z = 0;
+
+            //console.log(heightScale);
+            console.log(graphLabels);
+
+            //let width = Math.min(window.innerWidth, 500) - 64;
+            let height = width / 3;
+            let heightScale = height/graphValues.reduce((a, b) => Math.max(a, b), -Infinity);
+            
+            let barWidth = Math.round(width/graphValues.length - 4);
+
+            while(z<graphValues.length){
+                
+                p=graphValues[z];
+                let barHeight = Math.round(p*heightScale);
+                let bar = document.createElement("div");
+                //bar.id 
+                bar.classList.add("graph-bar");
+                details.appendChild(bar);
+
+                let textDiv = document.createElement("div");
+                //textDiv.innerText = Math.round(p * 100).toString() + "%";
+                textDiv.innerText = Math.round(p).toString();
+                textDiv.setAttribute("style", "font-size: 16px; text-align: center");
+                bar.appendChild(textDiv);
+
+                let hitBar = document.createElement("div");
+                hitBar.classList.add("blue-bar");
+                hitBar.id = graphID + "-bar-" + z.toString();
+                let borderAlt = "";
+                if(z > 0 && graphValues[z-1] > graphValues[z]){
+                    borderAlt = ";border-left: 0px";
+                }
+                if(z < graphValues.length - 1 && graphValues[z+1] > graphValues[z]){
+                    borderAlt = ";border-right: 0px";
+                }
+                hitBar.setAttribute("style", "width: " + barWidth.toString() + "px;height: " + barHeight.toString() + "px" + borderAlt);
+                bar.appendChild(hitBar);
+
+                textDiv = document.createElement("div");
+                textDiv.innerText = graphLabels[z];
+                textDiv.setAttribute("style", "font-size: 16px; text-align: center");
+                bar.appendChild(textDiv);
+
+                z=z+1;
+            }
+            
+            let xLabel = document.createElement("div");
+            xLabel.innerText = xLabelText;
+            xLabel.setAttribute("style", "font-size: 16px; text-align: center");
+            details.appendChild(xLabel);
+
+            return graph;
+        }
+    </script>
+    <div class="analyzer" name="commanderSearch">
+        <p class="prompt"> Names of Commander(s)</p>
+        <input type="text" class="commander-name" id="commander-name-1" placeholder="Commander">
+        <br>
+        <input type="text" class="commander-name" id="commander-name-2" placeholder="Partner">
+        <p>
+            <input type="button" value="Load" onclick="loadCommanders()" id="commander-load-button" style="width: 100px">
+        </p>
+        <div class="result-box" id="load-result-box">
+        </div>
+    </div>
+</body>
