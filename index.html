@@ -39,7 +39,7 @@
         /*margin: 8px;*/ /* spacing calculators apart */
         margin-right:15px;
         margin-bottom:15px;
-        width: 600px; /* change if needed,  */
+        width: 700px; /* change if needed,  */
         max-width: 100%;
         float:left;
         /*display: inline-block; /* let them show side by side */
@@ -102,6 +102,18 @@
         background-color: #ff1111;
         width: 40px;
     }
+    .split-line{
+        max-height: 100%;
+        border-right: 1px solid black;
+    }
+    .signature-list{
+        margin-top: 3px;
+        margin-bottom: 0px;
+        /*margin-left: 10px;*/
+    }
+    summary{
+        font-weight: bold;
+    }
     </style>
 </head>
 <body>
@@ -131,7 +143,7 @@
             parent.appendChild(text);
         }
 
-        function addGraph(id, parent, name, data, spacing, decimals, percent, highlight){
+        function addGraph(id, parent, name, data, spacing, labelDecimals, percent, highlight, highlightDecimals){
             let graph = document.getElementById(id);
             if(graph != null){
                 graph.remove();
@@ -139,10 +151,10 @@
             let labels = [];
             for(let i = 0; i < data.length; i++){
                 if(percent){
-                    labels.push((i * spacing * 100).toFixed(decimals) + "%");
+                    labels.push((i * spacing * 100).toFixed(labelDecimals) + "%");
                 }
                 else{
-                    labels.push((i * spacing).toFixed(decimals));
+                    labels.push((i * spacing).toFixed(labelDecimals));
                 }
             }
             graph = createBarGraph(id, "Distribution of " + name, labels, data, name, parent.clientWidth);
@@ -150,8 +162,30 @@
             let highlightBar = Math.floor(highlight/spacing);
             let barID = id + "-bar-" + highlightBar;
             let bar = document.getElementById(barID);
-            bar.style.backgroundColor = "red";  
-            bar.style.border = "2px solid #800"
+            if(bar != null){
+                let remainder = (highlight / spacing) - highlightBar;
+                let divider = document.createElement("div");
+                divider.classList.add("split-line");
+                let splitWidth = Math.ceil(bar.clientWidth * remainder);
+                divider.setAttribute("style", "width: " + splitWidth.toString() + "px;height: 100%; border-right: 1px solid black;");
+                bar.appendChild(divider);
+                let divider2 = document.createElement("div");
+                divider2.setAttribute("style", "width: " + (splitWidth + 2).toString() + "px;height: 10px; border-right: 1px solid black;");
+                bar.parentNode.insertBefore(divider2, bar);
+                let textDiv = document.createElement("div");
+                if(percent){
+                    textDiv.innerText = (highlight * 100).toFixed(highlightDecimals) + "%";
+                }
+                else{
+                    textDiv.innerText = (highlight).toFixed(highlightDecimals);
+                }
+                textDiv.setAttribute("style", "font-size: 16px; text-align: center; font-weight: bold;");
+                bar.parentNode.insertBefore(textDiv, divider2);
+                //bar.appendChild(textDiv);
+                
+                bar.style.backgroundColor = "red";  
+                bar.style.border = "2px solid #800"
+                }
         }
 
         async function loadCommanders(){
@@ -188,14 +222,58 @@
                 document.getElementById("hipster-graph").remove();
                 return;
             }
+            if(document.getElementById("error-text") != null){
+                document.getElementById("error-text").remove();
+            }
             commanderData = data.commander;
 
             addResultText("entropy-text", resultBox, "Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong>");
-            addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy.data, data.charts.entropy.spacing, 1, false, commanderData.entropy);
+            addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy.data, data.charts.entropy.spacing, 1, false, commanderData.entropy, 2);
             addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong>");
-            addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy.data, data.charts.synergy.spacing, 0, false, commanderData.synergy);
+            addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy.data, data.charts.synergy.spacing, 0, false, commanderData.synergy, 1);
             addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong>");
-            addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster.data, data.charts.hipster.spacing, 0, true, commanderData.hipster);
+            addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster.data, data.charts.hipster.spacing, 0, true, commanderData.hipster, 1);
+            if(commanderData.signature.length > 0){
+                //addResultText("signature-text", resultBox, "<br><strong>Signature cards:</strong>");
+                let signatureDiv = document.getElementById("signature-div");
+                if(signatureDiv != null){
+                    signatureDiv.remove();
+                }
+                signatureDiv = document.createElement("div");
+                signatureDiv.id = "signature-div";
+                signatureDiv.classList.add("bar-graph");
+                
+                signatureDetails = document.createElement("details");
+                signatureDetails.setAttribute("open", "");
+
+                signatureSummary = document.createElement("summary");
+                signatureSummary.innerText = "Signature Cards";
+                signatureDetails.appendChild(signatureSummary);
+
+                for(let i = 0; i < commanderData.signature.length; i++){
+                    let card = commanderData.signature[i];
+                    let cardEntry = document.createElement("p");
+                    cardEntry.classList.add("signature-list");
+                    cardEntry.innerText = card;
+                    let cardLink = document.createElement("a");
+                    cardLink.innerText = "EDHREC";
+                    cardLink.href = "https://edhrec.com/cards/" + sanitize(card);
+                    cardLink.target = "_blank";
+                    cardLink.style.fontSize = "12px";
+                    cardLink.style.marginLeft = "5px";
+                    cardEntry.appendChild(cardLink);
+                    signatureDetails.appendChild(cardEntry);
+                }
+                signatureDiv.appendChild(signatureDetails);
+                resultBox.appendChild(signatureDiv);
+            }
+            else{
+                addResultText("signature-text", resultBox, "<br>No signature cards");
+                let signatureDiv = document.getElementById("signature-div");
+                if(signatureDiv != null){
+                    signatureDiv.remove();
+                }
+            }
         }
 
         function createBarGraph(graphID, graphName, graphLabels, graphValues, xLabelText, width){
@@ -236,11 +314,11 @@
                 bar.classList.add("graph-bar");
                 details.appendChild(bar);
 
-                let textDiv = document.createElement("div");
+                //let textDiv = document.createElement("div");
                 //textDiv.innerText = Math.round(p * 100).toString() + "%";
-                textDiv.innerText = Math.round(p).toString();
+                /*textDiv.innerText = Math.round(p).toString();
                 textDiv.setAttribute("style", "font-size: 16px; text-align: center");
-                bar.appendChild(textDiv);
+                bar.appendChild(textDiv);*/
 
                 let hitBar = document.createElement("div");
                 hitBar.classList.add("blue-bar");
