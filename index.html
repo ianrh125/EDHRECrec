@@ -233,6 +233,7 @@
                 document.getElementById("synergy-graph").remove();
                 document.getElementById("hipster-text").remove();
                 document.getElementById("hipster-graph").remove();
+                document.getElementById("signature-text").remove();
                 document.getElementById("signature-div").remove();
                 return;
             }
@@ -247,6 +248,7 @@
             addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy, 0, false, commanderData.synergy, 1, ["More generic cards", "More niche cards"]);
             addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong><br>(cards run in less than 1% of all decks)");
             addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster, 0, true, commanderData.hipster, 1, "Hipster Card Percentage");
+            addResultText("signature-text", resultBox, "<br>Signature cards: <strong>" + commanderData.signature.length + "</strong><br>(cards that have the highest inclusion rate with this commander)");
             if(commanderData.signature.length > 0){
                 //addResultText("signature-text", resultBox, "<br><strong>Signature cards:</strong>");
                 let signatureDiv = document.getElementById("signature-div");
@@ -282,11 +284,7 @@
                 resultBox.appendChild(signatureDiv);
             }
             else{
-                addResultText("signature-div", resultBox, "<br>No signature cards");
-                let signatureDiv = document.getElementById("signature-div");
-                if(signatureDiv != null){
-                    signatureDiv.remove();
-                }
+                document.getElementById("signature-div").remove();
             }
         }
 
