@@ -280,7 +280,11 @@
             }
             if(data.error != null){
                 if(data.error == "No matching cards"){
-                    addResultText("error-text", resultBox, "ERROR: No commander found. Make sure the commander's full name is spelled right, it has at least 100 decks, and is at least a month old");
+                    addResultText("error-text", resultBox, "<span style=\"color: red; font-weight: bold\">ERROR:</span> No commander found. This may be for a few reasons:"
+                         + "<br> - Make sure the commander's full name is spelled correctly. Punctuation and capitalization are not necessary"
+                         + "<br> - Make sure the commander has at least 100 decks and is at least a month old"
+                         + "<br> - If the commander is an mdfc, enter the name on the front side of the card"
+                         + "<br> - If the commander has multiple Universes Beyond/Within printings, use the in-universe name");
                 }
                 document.getElementById("entropy-text").remove();
                 document.getElementById("entropy-graph").remove();
