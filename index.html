@@ -193,14 +193,52 @@
                 else{
                     textDiv.innerText = (highlight).toFixed(highlightDecimals);
                 }
-                let fontSize = Math.round(bar.clientWidth * 1.7/Math.max(textDiv.innerText.length, 4));
+                let fontSize = Math.min(Math.round(bar.clientWidth * 1.7/textDiv.innerText.length), 16);
                 textDiv.setAttribute("style", "font-size: " + fontSize + "px; text-align: center; font-weight: bold;");
                 bar.parentNode.insertBefore(textDiv, divider2);
                 //bar.appendChild(textDiv);
                 
                 bar.style.backgroundColor = "red";
                 //bar.style.border = "1px solid black"
+            }
+            else if (highlight < start){
+                barID = id + "-bar-0";
+                bar = document.getElementById(barID);
+                let divider2 = document.createElement("div");
+                divider2.innerText = "↲";
+                bar.parentNode.insertBefore(divider2, bar);
+                let textDiv = document.createElement("div");
+                if(percent){
+                    textDiv.innerText = (highlight * 100).toFixed(highlightDecimals) + "%";
                 }
+                else{
+                    textDiv.innerText = (highlight).toFixed(highlightDecimals);
+                }
+                let fontSize = Math.min(Math.round(bar.clientWidth * 1.7/textDiv.innerText.length), 16);
+                divider2.setAttribute("style", "font-size: "+ fontSize * 3 + "px");
+                textDiv.setAttribute("style", "font-size: " + fontSize + "px; text-align: center; font-weight: bold;");
+                textDiv.style.height = "0px";
+                bar.parentNode.insertBefore(textDiv, divider2);
+            }
+            else if (highlightBar >= data.length){
+                barID = id + "-bar-"+ (data.length - 1);
+                bar = document.getElementById(barID);
+                let divider2 = document.createElement("div");
+                divider2.innerText = "↳";
+                bar.parentNode.insertBefore(divider2, bar);
+                let textDiv = document.createElement("div");
+                if(percent){
+                    textDiv.innerText = (highlight * 100).toFixed(highlightDecimals) + "%";
+                }
+                else{
+                    textDiv.innerText = (highlight).toFixed(highlightDecimals);
+                }
+                let fontSize = Math.min(Math.round(bar.clientWidth * 1.7/textDiv.innerText.length), 16);
+                divider2.setAttribute("style", "font-size: "+ fontSize * 3 + "px; text-align: right");
+                textDiv.setAttribute("style", "font-size: " + fontSize + "px; text-align: center; font-weight: bold;");
+                textDiv.style.height = "0px";
+                bar.parentNode.insertBefore(textDiv, divider2);
+            }
         }
 
         async function loadCommanders(){
@@ -331,7 +369,7 @@
             let heightScale = height/graphValues.reduce((a, b) => Math.max(a, b), -Infinity);
             
             let barWidth = Math.round(width/graphValues.length - 4);
-            let fontSize = Math.round(barWidth * 1.2/Math.max(graphLabels[graphLabels.length-1].length,3));
+            let fontSize = Math.min(Math.round(barWidth * 1.2/graphLabels[graphLabels.length-1].length), 16);
 
             while(z<graphValues.length){
                 
