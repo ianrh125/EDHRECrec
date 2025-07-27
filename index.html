@@ -193,7 +193,8 @@
                 else{
                     textDiv.innerText = (highlight).toFixed(highlightDecimals);
                 }
-                textDiv.setAttribute("style", "font-size: 14px; text-align: center; font-weight: bold;");
+                let fontSize = Math.round(bar.clientWidth * 1.7/Math.max(textDiv.innerText.length, 4));
+                textDiv.setAttribute("style", "font-size: " + fontSize + "px; text-align: center; font-weight: bold;");
                 bar.parentNode.insertBefore(textDiv, divider2);
                 //bar.appendChild(textDiv);
                 
@@ -204,26 +205,41 @@
 
         async function loadCommanders(){
             let resultBox = document.getElementById("load-result-box");
+            const commanderLoadButton = document.getElementById("commander-load-button");
             let commanderName1 = (document.getElementById('commander-name-1').value) || "";
             let commanderName2 = (document.getElementById('commander-name-2').value) || "";
             let sanitizedName1 = sanitize(commanderName1);
             let sanitizedName2 = sanitize(commanderName2);
             let sanitizedNames = "";
-            if(commanderName1 != "" && commanderName2 != ""){
-                let nameList = [sanitizedName1, sanitizedName2];
-                sanitizedNames = nameList.sort().join("-");
+            let data;
+            if(commanderName1 == ""){
+                addResultText("error-text", resultBox, "Error: ");
+            }
+            else if(commanderName1 != "" && commanderName2 != ""){
+                sanitizedNames = sanitizedName1 + '-' + sanitizedName2;
+                commanderLoadButton.disabled = true;
+                commanderLoadButton.value = 'Loading...';
+                var response = await fetch('https://api.salubrioussnail.com/?edhrecrec=' + sanitizedNames);
+                data = await response.json();
+                if(data.error != null){
+                    sanitizedNames = sanitizedName2 + '-' + sanitizedName1;
+                    var response = await fetch('https://api.salubrioussnail.com/?edhrecrec=' + sanitizedNames);
+                    data = await response.json();
+                }
+                console.log('loaded');
+                commanderLoadButton.disabled = false;
+                commanderLoadButton.value = 'Load';
             }
             else{
                 sanitizedNames = sanitizedName1 + sanitizedName2;
+                commanderLoadButton.disabled = true;
+                commanderLoadButton.value = 'Loading...';
+                var response = await fetch('https://api.salubrioussnail.com/?edhrecrec=' + sanitizedNames);
+                console.log('loaded');
+                commanderLoadButton.disabled = false;
+                commanderLoadButton.value = 'Load';
+                data = await response.json();
             }
-            const commanderLoadButton = document.getElementById("commander-load-button");
-            commanderLoadButton.disabled = true;
-            commanderLoadButton.value = 'Loading...';
-            var response = await fetch('https://api.salubrioussnail.com/?edhrecrec=' + sanitizedNames);
-            console.log('loaded');
-            commanderLoadButton.disabled = false;
-            commanderLoadButton.value = 'Load';
-            data = await response.json();
             if(data.error != null){
                 if(data.error == "No matching cards"){
                     addResultText("error-text", resultBox, "ERROR: No commander found. Make sure the commander's full name is spelled right, it has at least 100 decks, and is at least a month old");
@@ -238,14 +254,12 @@
                 document.getElementById("signature-div").remove();
                 return;
             }
-            if(document.getElementById("error-text") != null){
-                document.getElementById("error-text").remove();
-            }
             commanderData = data.commander;
+            addResultText("error-text", resultBox, "EDHREC page found: <a href=\"https://edhrec.com/commanders/" + sanitizedNames + "\" target=\"_blank\">" + commanderData.name + "</a> (" + commanderData.count + " decks)");
 
-            addResultText("entropy-text", resultBox, "Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong><br>(variation between different decks)");
+            addResultText("entropy-text", resultBox, "<br>Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong><br>(variation between different decks)");
             addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy, 1, false, commanderData.entropy, 2, ["Less varied", "More varied"]);
-            addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong><br>(EDHREC synergy score divided by overall inclusion rate)");
+            addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong><br>(EDHREC synergy score divided by overall inclusion rate in color identity)");
             addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy, 0, false, commanderData.synergy, 1, ["More generic cards", "More niche cards"]);
             addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong><br>(cards run in less than 1% of all decks)");
             addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster, 0, true, commanderData.hipster, 1, "Hipster Card Percentage");
@@ -317,6 +331,7 @@
             let heightScale = height/graphValues.reduce((a, b) => Math.max(a, b), -Infinity);
             
             let barWidth = Math.round(width/graphValues.length - 4);
+            let fontSize = Math.round(barWidth * 1.2/Math.max(graphLabels[graphLabels.length-1].length,3));
 
             while(z<graphValues.length){
                 
@@ -348,7 +363,7 @@
 
                 textDiv = document.createElement("div");
                 textDiv.innerText = graphLabels[z];
-                textDiv.setAttribute("style", "font-size: 14px; text-align: center");
+                textDiv.setAttribute("style", "font-size: " + fontSize + "px; text-align: center");
                 bar.appendChild(textDiv);
 
                 z=z+1;
@@ -379,7 +394,7 @@
         <p class="prompt"> Names of Commander(s)</p>
         <input type="text" class="commander-name" id="commander-name-1" placeholder="Commander">
         <br>
-        <input type="text" class="commander-name" id="commander-name-2" placeholder="Partner">
+        <input type="text" class="commander-name" id="commander-name-2" placeholder="Partner/Background">
         <p>
             <input type="button" value="Load" onclick="loadCommanders()" id="commander-load-button" style="width: 100px">
         </p>
