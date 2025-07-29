@@ -297,6 +297,7 @@
                 return;
             }
             commanderData = data.commander;
+            sanitizedNames = sanitize(commanderData.name);
             addResultText("error-text", resultBox, "EDHREC page found: <a href=\"https://edhrec.com/commanders/" + sanitizedNames + "\" target=\"_blank\">" + commanderData.name + "</a> (" + commanderData.count + " decks)");
 
             addResultText("entropy-text", resultBox, "<br>Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong><br>(variation between different decks)");
