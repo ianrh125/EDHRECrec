@@ -297,8 +297,28 @@
                 return;
             }
             commanderData = data.commander;
-            sanitizedNames = sanitize(commanderData.name);
-            addResultText("error-text", resultBox, "EDHREC page found: <a href=\"https://edhrec.com/commanders/" + sanitizedNames + "\" target=\"_blank\">" + commanderData.name + "</a> (" + commanderData.count + " decks)");
+            sanitizedCommander = sanitize(commanderData.name);
+            let typos = 0;
+            let inputWords = sanitizedNames.split("-");
+            if(inputWords[0].length > 1){
+                for(let i = 0; i < inputWords.length; i++){
+                    if(!sanitizedCommander.includes(inputWords[i])){
+                        typos++;
+                    }
+                }
+            }
+            else if(!sanitizedCommander.includes(inputWords)){
+                typos = 1;
+            }
+            if(typos == 0){
+                addResultText("error-text", resultBox, "EDHREC page found: <a href=\"https://edhrec.com/commanders/" + sanitizedCommander + "\" target=\"_blank\">" + commanderData.name + "</a> (" + commanderData.count + " decks)");
+            }
+            else{
+                addResultText("error-text", resultBox, "Partial match: <a href=\"https://edhrec.com/commanders/" + sanitizedCommander + "\" target=\"_blank\">" + commanderData.name + "</a> (" + commanderData.count + " decks)"
+                    + "<br>If you're looking for a different commander or partner pair, make sure all names are spelled correctly and its EDHREC page has more than 100 decks."
+                );
+            }
+            
 
             addResultText("entropy-text", resultBox, "<br>Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong><br>(variation between different decks)");
             addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy, 1, false, commanderData.entropy, 2, ["Less varied", "More varied"]);
