@@ -318,13 +318,54 @@
                     + "<br>If you're looking for a different commander or partner pair, make sure all names are spelled correctly and its EDHREC page has more than 100 decks."
                 );
             }
-            
+            //add text for entropy percentile
+            let entropyPercentile = "";
+            if(commanderData["entropy-percentile"] > 0.9){
+                entropyPercentile = "(top " + ((1-commanderData["entropy-percentile"]) * 100).toFixed(1) + "%)"
+            }
+            else if(commanderData["entropy-percentile"] > 0.5){
+                entropyPercentile = "(top " + ((1-commanderData["entropy-percentile"]) * 100).toFixed(0) + "%)"
+            }
+            else if(commanderData["entropy-percentile"] > 0.1){
+                entropyPercentile = "(bottom " + (commanderData["entropy-percentile"] * 100).toFixed(0) + "%)"
+            }
+            else{
+                entropyPercentile = "(bottom " + (commanderData["entropy-percentile"] * 100).toFixed(1) + "%)"
+            }
+            //add text for synergy percentile
+            let synergyPercentile = "";
+            if(commanderData["synergy-percentile"] > 0.9){
+                synergyPercentile = "(top " + ((1-commanderData["synergy-percentile"]) * 100).toFixed(1) + "%)"
+            }
+            else if(commanderData["synergy-percentile"] > 0.5){
+                synergyPercentile = "(top " + ((1-commanderData["synergy-percentile"]) * 100).toFixed(0) + "%)"
+            }
+            else if(commanderData["synergy-percentile"] > 0.1){
+                synergyPercentile = "(bottom " + (commanderData["synergy-percentile"] * 100).toFixed(0) + "%)"
+            }
+            else{
+                synergyPercentile = "(bottom " + (commanderData["synergy-percentile"] * 100).toFixed(1) + "%)"
+            }
+            //add text for hipster percentile
+            let hipsterPercentile = "";
+            if(commanderData["hipster-percentile"] > 0.9){
+                hipsterPercentile = "(top " + ((1-commanderData["hipster-percentile"]) * 100).toFixed(1) + "%)"
+            }
+            else if(commanderData["hipster-percentile"] > 0.5){
+                hipsterPercentile = "(top " + ((1-commanderData["hipster-percentile"]) * 100).toFixed(0) + "%)"
+            }
+            else if(commanderData["hipster-percentile"] > 0.1){
+                hipsterPercentile = "(bottom " + (commanderData["hipster-percentile"] * 100).toFixed(0) + "%)"
+            }
+            else{
+                hipsterPercentile = "(bottom " + (commanderData["hipster-percentile"] * 100).toFixed(1) + "%)"
+            }
 
-            addResultText("entropy-text", resultBox, "<br>Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong><br>(variation between different decks)");
+            addResultText("entropy-text", resultBox, "<br>Entropy: <strong>" + commanderData.entropy.toFixed(2) + "</strong> " + entropyPercentile + "<br>(variation between different decks)");
             addGraph("entropy-graph", resultBox, "Entropy", data.charts.entropy, 1, false, commanderData.entropy, 2, ["Less varied", "More varied"]);
-            addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong><br>(EDHREC synergy score divided by overall inclusion rate in color identity)");
+            addResultText("synergy-text", resultBox, "<br>Synergy: <strong>" + commanderData.synergy.toFixed(1) + "</strong> " + synergyPercentile + "<br>(EDHREC synergy score divided by overall inclusion rate in color identity)<br>*This has recently been updated to ignore the commander's effect on the overall rate");
             addGraph("synergy-graph", resultBox, "Synergy", data.charts.synergy, 0, false, commanderData.synergy, 1, ["More generic cards", "More niche cards"]);
-            addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong><br>(cards run in less than 1% of all decks)");
+            addResultText("hipster-text", resultBox, "<br>Hipster cards: <strong>" + (commanderData.hipster * 100).toFixed(1) + "%</strong> " + hipsterPercentile + "<br>(cards run in less than 1% of all decks)");
             addGraph("hipster-graph", resultBox, "Hipster Card Percentage", data.charts.hipster, 0, true, commanderData.hipster, 1, "Hipster Card Percentage");
             addResultText("signature-text", resultBox, "<br>Signature cards: <strong>" + commanderData.signature.length + "</strong><br>(cards that have the highest inclusion rate with this commander)");
             if(commanderData.signature.length > 0){
